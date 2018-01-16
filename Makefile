@@ -16,3 +16,6 @@ $(TARGET): $(OBJECTS)
 
 clean:
 	rm -f *.o *.so
+
+sextest: sextest.c
+	$(CC) -L. -lsexpak -Wl,-rpath . sextest.c -o sextest
