@@ -40,6 +40,36 @@ int fcopy(FILE *ifp, FILE *ofp)
 	return total;
 }
 
+int read_file(const char *fname, unsigned char *buf, size_t len)
+{
+	FILE *fp;
+	int nread;
+
+	fp = fopen(fname, "r");
+	if (!fp) {
+		return -1;
+	}
+
+	nread = fread(buf, 1, len, fp);
+	fclose(fp);
+	return nread;
+}
+
+int write_file(const char *fname, unsigned char *buf, size_t len)
+{
+	FILE *fp;
+	int nwrite;
+
+	fp = fopen(fname, "w");
+	if (!fp) {
+		return -1;
+	}
+
+	nwrite = fwrite(buf, 1, len, fp);
+	fclose(fp);
+	return nwrite;
+}
+
 int sp_build(const char *srcfile, const char *dstfile, const char *mark)
 {
 	struct sexpak_head sph;
@@ -173,6 +203,56 @@ int sp_parse(const char *srcfile, const char *dstfile)
 	return 0;
 }
 
+int sp_encrypt(const char *srcfile, const char *dstfile)
+{
+	struct sex_opts so;
+	char plainbuf[2048/8];
+	unsigned char cryptbuf[4096];
+	size_t plainlen, cryptlen;
+
+	strcpy(so.s_key_file, SIGN_KEY);
+
+	plainlen = read_file(srcfile, plainbuf, sizeof(plainbuf));
+	if (!plainlen) {
+		printf("Failed to read input file: %s\n", srcfile);
+		return -1;
+	}
+
+	cryptlen = sp_encrypt_data(plainbuf, plainlen, cryptbuf, &so);
+	if (cryptlen <= 0) {
+		printf("Failed to encrypt data\n");
+		return -1;
+	}
+
+	write_file(dstfile, cryptbuf, cryptlen);
+	return 0;
+}
+
+int sp_decrypt(const char *srcfile, const char *dstfile)
+{
+	struct sex_opts so;
+	char plainbuf[2048/8];
+	unsigned char cryptbuf[4096];
+	size_t plainlen, cryptlen;
+
+	strcpy(so.s_cert_file, SIGN_CRT);
+
+	cryptlen = read_file(srcfile, cryptbuf, sizeof(cryptbuf));
+	if (!cryptlen) {
+		printf("Failed to read input file\n");
+		return -1;
+	}
+
+	plainlen = sp_decrypt_data(cryptbuf, cryptlen, plainbuf, &so);
+	if (plainlen <= 0) {
+		printf("Failed to decrypt data\n");
+		return -1;
+	}
+
+	write_file(dstfile, plainbuf, plainlen);
+	return 0;
+}
+
 int main(int argc, char *argv[])
 {
 	int ret;
@@ -198,6 +278,18 @@ int main(int argc, char *argv[])
 		if (!ret)
 			printf("PASS\n");
 		else
+			printf("FAIL\n");
+
+		return ret;
+	} else if (!strcmp(argv[1], "e")) {
+		ret = sp_encrypt(argv[2], argv[3]);
+		if (ret)
+			printf("FAIL\n");
+
+		return ret;
+	} else if (!strcmp(argv[1], "d")) {
+		ret = sp_decrypt(argv[2], argv[3]);
+		if (ret)
 			printf("FAIL\n");
 
 		return ret;
