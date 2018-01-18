@@ -11,7 +11,10 @@ struct sex_opts {
 	};
 };
 
-int sign_format(FILE *srcfp, char *outbuf, size_t *outlen, struct sex_opts *opts);
-int sign_verify(FILE *srcfp, char *signbuf, size_t signlen, struct sex_opts *opts);
+int sp_sign_file(FILE *srcfp, char *outbuf, size_t *outlen, struct sex_opts *opts);
+int sp_verfiy_file(FILE *srcfp, char *signbuf, size_t signlen, struct sex_opts *opts);
+
+int sp_decrypt_data(unsigned char *srcbuf, size_t srclen, unsigned char *dstbuf, struct sex_opts *opts);
+int sp_encrypt_data(unsigned char *srcbuf, size_t srclen, unsigned char *dstbuf, struct sex_opts *opts);
 
 #endif //__SEXPAK_H__

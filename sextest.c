@@ -63,7 +63,7 @@ int sp_build(const char *srcfile, const char *dstfile, const char *mark)
 
 	strcpy(so.s_key_file, SIGN_KEY);
 
-	if (sign_format(fp, keydata, &keylen, &so)) {
+	if (sp_sign_file(fp, keydata, &keylen, &so)) {
 		printf("Failed to generate file signature\n");
 		fclose(fp);
 		return -1;
@@ -148,7 +148,7 @@ int sp_parse(const char *srcfile, const char *dstfile)
 
 	strcpy(so.s_cert_file, SIGN_CRT);
 
-	if (sign_verify(fp, keydata, sph.keylen, &so)) {
+	if (sp_verfiy_file(fp, keydata, sph.keylen, &so)) {
 		fclose(fp);
 		return -1;
 	}
@@ -175,6 +175,8 @@ int sp_parse(const char *srcfile, const char *dstfile)
 
 int main(int argc, char *argv[])
 {
+	int ret;
+
 	if (argc < 4) {
 		printf("Missing aruments\n");
 		return -1;
@@ -185,14 +187,22 @@ int main(int argc, char *argv[])
 			printf("Missing build/bundle aruments\n");
 			return -1;
 		}
-		sp_build(argv[2], argv[3], argv[4]);
-		return 0;
+
+		ret = sp_build(argv[2], argv[3], argv[4]);
+		if (ret)
+			printf("FAIL\n");
+
+		return ret;
 	} else if (!strcmp(argv[1], "v")) {
-		int ret = sp_parse(argv[2], argv[3]);
+		ret = sp_parse(argv[2], argv[3]);
 		if (!ret)
 			printf("PASS\n");
 		else
 			printf("FAIL\n");
+
 		return ret;
+	} else {
+		printf("Unknown command\n");
+		exit(-1);
 	}
 }

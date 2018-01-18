@@ -3,6 +3,7 @@
 #include <string.h>
 #include <openssl/bio.h>
 #include <openssl/evp.h>
+#include <openssl/rsa.h>
 #include <openssl/x509.h>
 #include <openssl/pem.h>
 
@@ -224,7 +225,7 @@ end:
 
 
 int
-sign_format(FILE *srcfp, char *outbuf, size_t *outlen, struct sex_opts *opts)
+sp_sign_file(FILE *srcfp, char *outbuf, size_t *outlen, struct sex_opts *opts)
 {
 	int ret;
 	char *tmp;
@@ -253,7 +254,7 @@ sign_format(FILE *srcfp, char *outbuf, size_t *outlen, struct sex_opts *opts)
 }
 
 int
-sign_verify(FILE *srcfp, char *signbuf, size_t signlen, struct sex_opts *opts)
+sp_verfiy_file(FILE *srcfp, char *signbuf, size_t signlen, struct sex_opts *opts)
 {
 	int ret;
 	BIO *in = NULL;
@@ -274,5 +275,56 @@ sign_verify(FILE *srcfp, char *signbuf, size_t signlen, struct sex_opts *opts)
 	BIO_free(in);
 
 	return ret;
+}
 
+int
+sp_encrypt_data(unsigned char *srcbuf, size_t srclen, unsigned char *dstbuf, struct sex_opts *opts)
+{
+	int retlen;
+	EVP_PKEY *pkey;
+	RSA *rsa;
+
+	OpenSSL_add_all_algorithms();
+
+	pkey = load_pvt_key(opts->s_key_file);
+	if (!pkey) {
+		return -1;
+	}
+
+	rsa = EVP_PKEY_get1_RSA(pkey);
+	EVP_PKEY_free(pkey);
+	if (!rsa) {
+		log_error("Failed to get KEY RSA\n");
+		return -1;
+	}
+
+	retlen = RSA_private_encrypt(srclen, srcbuf, dstbuf, rsa, RSA_PKCS1_PADDING);
+	RSA_free(rsa);
+	return retlen;
+}
+
+int
+sp_decrypt_data(unsigned char *srcbuf, size_t srclen, unsigned char *dstbuf, struct sex_opts *opts)
+{
+	int retlen;
+	EVP_PKEY *pkey;
+	RSA *rsa;
+
+	OpenSSL_add_all_algorithms();
+
+	pkey = load_cert_key(opts->s_cert_file);
+	if (!pkey) {
+		return -1;
+	}
+
+	rsa = EVP_PKEY_get1_RSA(pkey);
+	EVP_PKEY_free(pkey);
+	if (!rsa) {
+		log_error("Failed to get KEY RSA\n");
+		return -1;
+	}
+
+	retlen = RSA_public_decrypt(srclen, srcbuf, dstbuf, rsa, RSA_PKCS1_PADDING);
+	RSA_free(rsa);
+	return retlen;
 }
