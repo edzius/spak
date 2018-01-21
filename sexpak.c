@@ -6,11 +6,15 @@
 #include <openssl/rsa.h>
 #include <openssl/x509.h>
 #include <openssl/pem.h>
+#include <openssl/rand.h>
 
 #include "sexpak.h"
 
 #define log_info printf
 #define log_error printf
+
+#define CRYPT_BUFSIZE   (8*1024)
+static const char magic[] = "Salted__";
 
 EVP_PKEY *
 load_pvt_key(const char *file)
@@ -278,7 +282,7 @@ sp_verfiy_file(FILE *srcfp, char *signbuf, size_t signlen, struct sex_opts *opts
 }
 
 int
-sp_encrypt_data(unsigned char *srcbuf, size_t srclen, unsigned char *dstbuf, struct sex_opts *opts)
+sp_key_encrypt_data(unsigned char *srcbuf, size_t srclen, unsigned char *dstbuf, struct sex_opts *opts)
 {
 	int retlen;
 	EVP_PKEY *pkey;
@@ -304,7 +308,7 @@ sp_encrypt_data(unsigned char *srcbuf, size_t srclen, unsigned char *dstbuf, str
 }
 
 int
-sp_decrypt_data(unsigned char *srcbuf, size_t srclen, unsigned char *dstbuf, struct sex_opts *opts)
+sp_key_decrypt_data(unsigned char *srcbuf, size_t srclen, unsigned char *dstbuf, struct sex_opts *opts)
 {
 	int retlen;
 	EVP_PKEY *pkey;
@@ -327,4 +331,185 @@ sp_decrypt_data(unsigned char *srcbuf, size_t srclen, unsigned char *dstbuf, str
 	retlen = RSA_public_decrypt(srclen, srcbuf, dstbuf, rsa, RSA_PKCS1_PADDING);
 	RSA_free(rsa);
 	return retlen;
+}
+
+int
+sp_pass_encrypt_data(const char *infile, const char *outfile, const char *pass)
+{
+	BIO *benc = NULL, *rbio = NULL, *wbio = NULL;
+	EVP_CIPHER_CTX *ctx = NULL;
+	const EVP_CIPHER *cipher = NULL;
+	int ret = 1;
+	int rlen;
+	int buffsize = CRYPT_BUFSIZE;
+	unsigned char buff[EVP_ENCODE_LENGTH(buffsize)];
+	unsigned char key[EVP_MAX_KEY_LENGTH];
+	unsigned char iv[EVP_MAX_IV_LENGTH];
+	unsigned char salt[PKCS5_SALT_LEN];
+
+	cipher = EVP_aes_256_cbc();
+
+	rbio = BIO_new_file(infile, "rb");
+	if (!rbio) {
+		log_error("Error opening input file %s\n", infile);
+		goto end;
+	}
+
+	wbio = BIO_new_file(outfile, "wb");
+	if (!wbio) {
+		log_error("Error opening output file %s\n", outfile);
+		goto end;
+	}
+
+	if (RAND_bytes(salt, sizeof(salt)) <= 0) {
+		log_error("Error generating random data\n");
+		goto end;
+	}
+
+	if (!EVP_BytesToKey(cipher, EVP_sha256(), salt,
+			    (unsigned char *)pass, strlen(pass), 1, key, iv)) {
+		log_error("Failed EVP_BytesToKey\n");
+		goto end;
+	}
+
+	/*
+	 * If -P option then don't bother writing
+	 */
+	if ((BIO_write(wbio, magic, sizeof(magic) - 1) != sizeof(magic) - 1 ||
+	     BIO_write(wbio, salt, sizeof(salt)) != sizeof(salt))) {
+		log_error("Error writing output file\n");
+		goto end;
+	}
+
+	benc = BIO_new(BIO_f_cipher());
+	if (!benc) {
+		log_error("Internal error\n");
+		goto end;
+	}
+
+	BIO_get_cipher_ctx(benc, &ctx);
+
+	if (!EVP_CipherInit_ex(ctx, cipher, NULL, NULL, NULL, 1)) {
+		log_error("Error setting cipher %s\n", EVP_CIPHER_name(cipher));
+		goto end;
+	}
+
+	if (!EVP_CipherInit_ex(ctx, NULL, NULL, key, iv, 1)) {
+		log_error("Error setting cipher %s\n", EVP_CIPHER_name(cipher));
+		goto end;
+	}
+
+	wbio = BIO_push(benc, wbio);
+
+	for (;;) {
+		rlen = BIO_read(rbio, (char *)buff, buffsize);
+		if (rlen <= 0)
+			break;
+		if (BIO_write(wbio, (char *)buff, rlen) != rlen) {
+			log_error("Error writing output file\n");
+			goto end;
+		}
+	}
+
+	if (!BIO_flush(wbio)) {
+		log_info("Bad encrypt\n");
+		goto end;
+	}
+
+	ret = 0;
+end:
+	BIO_free(rbio);
+	BIO_free_all(wbio);
+	BIO_free(benc);
+	return (ret);
+}
+
+int
+sp_pass_decrypt_data(const char *infile, const char *outfile, const char *pass)
+{
+	BIO *benc = NULL, *rbio = NULL, *wbio = NULL;
+	EVP_CIPHER_CTX *ctx = NULL;
+	const EVP_CIPHER *cipher = NULL;
+	char mbuf[sizeof(magic) - 1];
+	int ret = 1;
+	int rlen;
+	int buffsize = CRYPT_BUFSIZE;
+	unsigned char buff[EVP_ENCODE_LENGTH(buffsize)];
+	unsigned char key[EVP_MAX_KEY_LENGTH];
+	unsigned char iv[EVP_MAX_IV_LENGTH];
+	unsigned char salt[PKCS5_SALT_LEN];
+
+	cipher = EVP_aes_256_cbc();
+
+	rbio = BIO_new_file(infile, "rb");
+	if (!rbio) {
+		log_error("Error opening input file %s\n", infile);
+		goto end;
+	}
+
+	wbio = BIO_new_file(outfile, "wb");
+	if (!wbio) {
+		log_error("Error opening output file %s\n", outfile);
+		goto end;
+	}
+
+	if (BIO_read(rbio, mbuf, sizeof(mbuf)) != sizeof(mbuf) ||
+	    BIO_read(rbio, salt, sizeof(salt)) != sizeof(salt)) {
+		log_error("Error reading input file\n");
+		goto end;
+	}
+
+	if (memcmp(mbuf, magic, sizeof(magic) - 1)) {
+		log_error("Bad magic number\n");
+		goto end;
+	}
+
+	if (!EVP_BytesToKey(cipher, EVP_sha256(), salt,
+			    (unsigned char *)pass, strlen(pass), 1, key, iv)) {
+		printf("Failed EVP_BytesToKey\n");
+		goto end;
+	}
+
+	benc = BIO_new(BIO_f_cipher());
+	if (!benc) {
+		log_error("Internal error\n");
+		goto end;
+	}
+
+	BIO_get_cipher_ctx(benc, &ctx);
+
+	if (!EVP_CipherInit_ex(ctx, cipher, NULL, NULL, NULL, 0)) {
+		log_error("Error setting cipher %s\n", EVP_CIPHER_name(cipher));
+		goto end;
+	}
+
+	if (!EVP_CipherInit_ex(ctx, NULL, NULL, key, iv, 0)) {
+		log_error("Error setting cipher %s\n", EVP_CIPHER_name(cipher));
+		goto end;
+	}
+
+	/* Only encrypt/decrypt as we write the file */
+	wbio = BIO_push(benc, wbio);
+
+	for (;;) {
+		rlen = BIO_read(rbio, (char *)buff, buffsize);
+		if (rlen <= 0)
+			break;
+		if (BIO_write(wbio, (char *)buff, rlen) != rlen) {
+			log_error("Error writing output file\n");
+			goto end;
+		}
+	}
+
+	if (!BIO_flush(wbio)) {
+		log_info("Bad decrypt\n");
+		goto end;
+	}
+
+	ret = 0;
+end:
+	BIO_free(rbio);
+	BIO_free_all(wbio);
+	BIO_free(benc);
+	return (ret);
 }
