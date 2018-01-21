@@ -218,7 +218,7 @@ int sp_encrypt(const char *srcfile, const char *dstfile)
 		return -1;
 	}
 
-	cryptlen = sp_encrypt_data(plainbuf, plainlen, cryptbuf, &so);
+	cryptlen = sp_key_encrypt_data(plainbuf, plainlen, cryptbuf, &so);
 	if (cryptlen <= 0) {
 		printf("Failed to encrypt data\n");
 		return -1;
@@ -243,7 +243,7 @@ int sp_decrypt(const char *srcfile, const char *dstfile)
 		return -1;
 	}
 
-	plainlen = sp_decrypt_data(cryptbuf, cryptlen, plainbuf, &so);
+	plainlen = sp_key_decrypt_data(cryptbuf, cryptlen, plainbuf, &so);
 	if (plainlen <= 0) {
 		printf("Failed to decrypt data\n");
 		return -1;
