@@ -20,4 +20,6 @@ int sp_key_encrypt_data(unsigned char *srcbuf, size_t srclen, unsigned char *dst
 int sp_pass_encrypt_data(const char *infile, const char *outfile, const char *pass);
 int sp_pass_decrypt_data(const char *infile, const char *outfile, const char *pass);
 
+int sp_rand_base64(char *buf, size_t len);
+
 #endif //__SEXPAK_H__

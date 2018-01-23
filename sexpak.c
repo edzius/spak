@@ -513,3 +513,44 @@ end:
 	BIO_free(benc);
 	return (ret);
 }
+
+int
+sp_rand_base64(char *buf, size_t len)
+{
+	BIO *out, *b64;
+	char *tmp;
+	int left = len / 2;
+	int ret = 1;
+
+	out = BIO_new(BIO_s_mem());
+	b64 = BIO_new(BIO_f_base64());
+	if (!out || !b64)
+		goto end;
+	out = BIO_push(b64, out);
+	BIO_set_flags(out, BIO_FLAGS_BASE64_NO_NL);
+
+	while (left > 0) {
+		unsigned char buf[4096];
+		size_t chunk;
+
+		chunk = left;
+		if (chunk > sizeof(buf))
+			chunk = sizeof(buf);
+		if (RAND_bytes(buf, chunk) <= 0)
+			goto end;
+		if (BIO_write(out, buf, chunk) != chunk)
+			goto end;
+		left -= chunk;
+	}
+	if (BIO_flush(out) <= 0)
+		goto end;
+
+	left = BIO_get_mem_data(out, &tmp);
+	memcpy(buf, tmp, left);
+	buf[left] = 0;
+
+	ret = 0;
+end:
+	BIO_free_all(out);
+	return ret;
+}
