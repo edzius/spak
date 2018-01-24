@@ -33,17 +33,10 @@ static char sip_ops_short[] = "ed";
 static struct option sip_ops_long[] = {
         { "encode",          0, 0, 'e' },
         { "decode",          0, 0, 'd' },
+        { "mark",            0, 0, 'm' },
         { 0, 0, 0, 0 }
 };
 
-
-static void sip_usage(void)
-{
-	fprintf(stderr, "Usage: sip <source-file> <output-file>\n"
-		"  -e, --encode             Image encode operation\n"
-		"  -d, --decode             Image decode operation\n"
-	       );
-}
 
 static char sipack_magic[] = { 0x1B, 'S', 'P', '1' };
 
@@ -55,7 +48,8 @@ struct sipack_header {
 	unsigned char keydata[];
 };
 
-int sip_encode(const char *srcfile, const char *dstfile, const char *mark)
+static int
+sip_encode(const char *srcfile, const char *dstfile, const char *mark)
 {
 	struct sipack_header sph = {0};
 	struct spak_opts so;
@@ -123,7 +117,8 @@ int sip_encode(const char *srcfile, const char *dstfile, const char *mark)
 	return 0;
 }
 
-int sip_decode(const char *srcfile, const char *dstfile)
+static int
+sip_decode(const char *srcfile, const char *dstfile)
 {
 	struct sipack_header sph;
 	struct spak_opts so;
@@ -197,7 +192,18 @@ int sip_decode(const char *srcfile, const char *dstfile)
 	return 0;
 }
 
-int main(int argc, char *argv[])
+static void
+sip_usage(void)
+{
+	fprintf(stderr, "Usage: sip [options] <source-file> <output-file>\n"
+		"  -e, --encode             Image encode operation\n"
+		"  -d, --decode             Image decode operation\n"
+		"  -m, --mark [MARK]        Encoding specific mark\n"
+	       );
+}
+
+int
+main(int argc, char *argv[])
 {
 	int ret;
 	int opt, index;
@@ -213,6 +219,9 @@ int main(int argc, char *argv[])
 			break;
 		case 'd':
 			op = SIP_OP_DECODE;
+			break;
+		case 'm':
+			mark = optarg;
 			break;
 		default:
 			sip_usage();
@@ -234,8 +243,6 @@ int main(int argc, char *argv[])
 	case SIP_OP_ENCODE:
 		srcfile = argv[optind];
 		dstfile = argv[optind + 1];
-		if (argc - optind > 2)
-			mark = argv[optind + 2];
 
 		ret = sip_encode(srcfile, dstfile, mark);
 		break;
@@ -246,7 +253,7 @@ int main(int argc, char *argv[])
 		ret = sip_decode(srcfile, dstfile);
 		break;
 	default:
-		printf("Unknown command\n");
+		fprintf(stderr, "Unknown command\n");
 		exit(EXIT_FAILURE);
 	}
 
