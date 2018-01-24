@@ -19,3 +19,6 @@ clean:
 
 sextest: sextest.c
 	$(CC) -L. -lsexpak -Wl,-rpath . sextest.c -o sextest
+
+sip: sip.c
+	$(CC) -L. -lsexpak -Wl,-rpath . sip.c -o sip
