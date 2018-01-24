@@ -5,13 +5,15 @@ LDFLAGS_BIN =
 LDLIBS = -lc -lcrypto -lssl
 LDLIBS_BIN =
 
+BINDEPS = sipop.o
+
 ifneq ($(CONFIG_SHARED_LIBRARY),)
 CFLAGS += -fPIC
 LDFLAGS_BIN += -Wl,-rpath . -L.
 LDLIBS_BIN += -lspak
 LIBNAME = libspak.so
 else
-BINDEPS = spak.o
+BINDEPS += spak.o
 endif
 
 TARGETS = $(LIBNAME) spaktest sip sipenc sipdec
