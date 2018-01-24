@@ -8,7 +8,7 @@
 #include <openssl/pem.h>
 #include <openssl/rand.h>
 
-#include "sexpak.h"
+#include "spak.h"
 
 #define log_info printf
 #define log_error printf
@@ -16,7 +16,7 @@
 #define CRYPT_BUFSIZE   (8*1024)
 static const char magic[] = "Salted__";
 
-EVP_PKEY *
+static EVP_PKEY *
 load_pvt_key(const char *file)
 {
 	EVP_PKEY *privkey;
@@ -36,7 +36,7 @@ load_pvt_key(const char *file)
 	return privkey;
 }
 
-EVP_PKEY *
+static EVP_PKEY *
 load_cert_key(const char *file)
 {
 	EVP_PKEY *pkey = NULL;
@@ -76,7 +76,7 @@ load_cert_key(const char *file)
 }
 
 static int
-sign_build_BIO(BIO *in_data, BIO *out_data, struct sex_opts *opts)
+sign_build_BIO(BIO *in_data, BIO *out_data, struct spak_opts *opts)
 {
 	BIO *bmd = NULL;
 	BIO *in = in_data, *out = out_data;
@@ -143,7 +143,7 @@ end:
 }
 
 static int
-sign_verify_BIO(BIO *in_data, BIO *sig_data, struct sex_opts *opts)
+sign_verify_BIO(BIO *in_data, BIO *sig_data, struct spak_opts *opts)
 {
 	BIO *bmd = NULL;
 	BIO *in = in_data;
@@ -229,7 +229,7 @@ end:
 
 
 int
-sp_sign_file(FILE *srcfp, char *outbuf, size_t *outlen, struct sex_opts *opts)
+sp_sign_file(FILE *srcfp, char *outbuf, size_t *outlen, struct spak_opts *opts)
 {
 	int ret;
 	char *tmp;
@@ -258,7 +258,7 @@ sp_sign_file(FILE *srcfp, char *outbuf, size_t *outlen, struct sex_opts *opts)
 }
 
 int
-sp_verfiy_file(FILE *srcfp, char *signbuf, size_t signlen, struct sex_opts *opts)
+sp_verfiy_file(FILE *srcfp, char *signbuf, size_t signlen, struct spak_opts *opts)
 {
 	int ret;
 	BIO *in = NULL;
@@ -282,7 +282,7 @@ sp_verfiy_file(FILE *srcfp, char *signbuf, size_t signlen, struct sex_opts *opts
 }
 
 int
-sp_key_encrypt_data(unsigned char *srcbuf, size_t srclen, unsigned char *dstbuf, struct sex_opts *opts)
+sp_key_encrypt_data(unsigned char *srcbuf, size_t srclen, unsigned char *dstbuf, struct spak_opts *opts)
 {
 	int retlen;
 	EVP_PKEY *pkey;
@@ -308,7 +308,7 @@ sp_key_encrypt_data(unsigned char *srcbuf, size_t srclen, unsigned char *dstbuf,
 }
 
 int
-sp_key_decrypt_data(unsigned char *srcbuf, size_t srclen, unsigned char *dstbuf, struct sex_opts *opts)
+sp_key_decrypt_data(unsigned char *srcbuf, size_t srclen, unsigned char *dstbuf, struct spak_opts *opts)
 {
 	int retlen;
 	EVP_PKEY *pkey;

@@ -10,7 +10,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#include "sexpak.h"
+#include "spak.h"
 
 #ifndef CONFIG_SIP_SIGN_KEY
 #define SIP_SIGN_KEY "sign-sip.key"
@@ -58,7 +58,7 @@ struct sipack_header {
 int sip_encode(const char *srcfile, const char *dstfile, const char *mark)
 {
 	struct sipack_header sph = {0};
-	struct sex_opts so;
+	struct spak_opts so;
 	struct stat srcinfo;
 	FILE *fp, *ofp;
 	char passbuf[64];
@@ -126,7 +126,7 @@ int sip_encode(const char *srcfile, const char *dstfile, const char *mark)
 int sip_decode(const char *srcfile, const char *dstfile)
 {
 	struct sipack_header sph;
-	struct sex_opts so;
+	struct spak_opts so;
 	size_t flen;
 	FILE *fp, *ofp;
 	unsigned char cryptbuf[4096];

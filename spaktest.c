@@ -6,12 +6,12 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#include "sexpak.h"
+#include "spak.h"
 
-#define SIGN_KEY "sexpak.key"
-#define SIGN_CRT "sexpak.crt"
+#define SIGN_KEY "spak.key"
+#define SIGN_CRT "spak.crt"
 
-struct sexpak_head {
+struct spak_header {
 	unsigned char magic[4];
 	unsigned int size;
 	char mark[16];
@@ -73,8 +73,8 @@ int write_file(const char *fname, unsigned char *buf, size_t len)
 
 int sp_build(const char *srcfile, const char *dstfile, const char *mark)
 {
-	struct sexpak_head sph;
-	struct sex_opts so;
+	struct spak_header sph;
+	struct spak_opts so;
 	struct stat srcinfo;
 	FILE *fp, *ofp;
 	char keydata[BUFSIZE];
@@ -134,8 +134,8 @@ int sp_build(const char *srcfile, const char *dstfile, const char *mark)
 
 int sp_parse(const char *srcfile, const char *dstfile)
 {
-	struct sexpak_head sph;
-	struct sex_opts so;
+	struct spak_header sph;
+	struct spak_opts so;
 	size_t flen;
 	FILE *fp, *ofp;
 	char keydata[BUFSIZE];
@@ -206,7 +206,7 @@ int sp_parse(const char *srcfile, const char *dstfile)
 
 int sp_encrypt(const char *srcfile, const char *dstfile)
 {
-	struct sex_opts so;
+	struct spak_opts so;
 	unsigned char plainbuf[2048/8];
 	unsigned char cryptbuf[4096];
 	size_t plainlen, cryptlen;
@@ -231,7 +231,7 @@ int sp_encrypt(const char *srcfile, const char *dstfile)
 
 int sp_decrypt(const char *srcfile, const char *dstfile)
 {
-	struct sex_opts so;
+	struct spak_opts so;
 	unsigned char plainbuf[2048/8];
 	unsigned char cryptbuf[4096];
 	size_t plainlen, cryptlen;

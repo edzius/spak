@@ -8,13 +8,13 @@ LDLIBS_BIN =
 ifneq ($(CONFIG_SHARED_LIBRARY),)
 CFLAGS += -fPIC
 LDFLAGS_BIN += -Wl,-rpath . -L.
-LDLIBS_BIN += -lsexpak
-LIBNAME = libsexpak.so
+LDLIBS_BIN += -lspak
+LIBNAME = libspak.so
 else
-BINDEPS = sexpak.o
+BINDEPS = spak.o
 endif
 
-TARGETS = $(LIBNAME) sextest sip
+TARGETS = $(LIBNAME) spaktest sip
 
 %.o: %.c
 	$(CC) -c $(CFLAGS) $< -o $@
@@ -24,10 +24,10 @@ all: $(TARGETS)
 clean:
 	rm -f *.o $(TARGETS)
 
-libsexpak.so: sexpak.o
+libspak.so: spak.o
 	$(LD) $(LDFLAGS) -shared -o $@ $^ ${LDLIBS}
 
-sextest: $(BINDEPS) sextest.o
+spaktest: $(BINDEPS) spaktest.o
 	$(CC) $(LDFLAGS_BIN) $(LDFLAGS) -o $@ $^ ${LDLIBS} ${LDLIBS_BIN}
 
 sip: $(BINDEPS) sip.o
