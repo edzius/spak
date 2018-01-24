@@ -14,7 +14,7 @@ else
 BINDEPS = spak.o
 endif
 
-TARGETS = $(LIBNAME) spaktest sip
+TARGETS = $(LIBNAME) spaktest sip sipenc sipdec
 
 %.o: %.c
 	$(CC) -c $(CFLAGS) $< -o $@
@@ -31,4 +31,10 @@ spaktest: $(BINDEPS) spaktest.o
 	$(CC) $(LDFLAGS_BIN) $(LDFLAGS) -o $@ $^ ${LDLIBS} ${LDLIBS_BIN}
 
 sip: $(BINDEPS) sip.o
+	$(CC) $(LDFLAGS_BIN) $(LDFLAGS) -o $@ $^ ${LDLIBS} ${LDLIBS_BIN}
+
+sipenc: $(BINDEPS) sipenc.o
+	$(CC) $(LDFLAGS_BIN) $(LDFLAGS) -o $@ $^ ${LDLIBS} ${LDLIBS_BIN}
+
+sipdec: $(BINDEPS) sipdec.o
 	$(CC) $(LDFLAGS_BIN) $(LDFLAGS) -o $@ $^ ${LDLIBS} ${LDLIBS_BIN}
