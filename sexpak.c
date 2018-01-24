@@ -334,7 +334,7 @@ sp_key_decrypt_data(unsigned char *srcbuf, size_t srclen, unsigned char *dstbuf,
 }
 
 int
-sp_pass_encrypt_data(const char *infile, const char *outfile, const char *pass)
+sp_pass_encrypt_data(FILE *srcfp, FILE *dstfp, const char *pass)
 {
 	BIO *benc = NULL, *rbio = NULL, *wbio = NULL;
 	EVP_CIPHER_CTX *ctx = NULL;
@@ -349,17 +349,15 @@ sp_pass_encrypt_data(const char *infile, const char *outfile, const char *pass)
 
 	cipher = EVP_aes_256_cbc();
 
-	rbio = BIO_new_file(infile, "rb");
-	if (!rbio) {
-		log_error("Error opening input file %s\n", infile);
-		goto end;
+	rbio = BIO_new(BIO_s_file());
+	wbio = BIO_new(BIO_s_file());
+	if (!rbio || !wbio) {
+		log_error("Internal error\n");
+		return -1;
 	}
 
-	wbio = BIO_new_file(outfile, "wb");
-	if (!wbio) {
-		log_error("Error opening output file %s\n", outfile);
-		goto end;
-	}
+	BIO_set_fp(rbio, srcfp, BIO_NOCLOSE);
+	BIO_set_fp(wbio, dstfp, BIO_NOCLOSE);
 
 	if (RAND_bytes(salt, sizeof(salt)) <= 0) {
 		log_error("Error generating random data\n");
@@ -425,7 +423,7 @@ end:
 }
 
 int
-sp_pass_decrypt_data(const char *infile, const char *outfile, const char *pass)
+sp_pass_decrypt_data(FILE *srcfp, FILE *dstfp, const char *pass)
 {
 	BIO *benc = NULL, *rbio = NULL, *wbio = NULL;
 	EVP_CIPHER_CTX *ctx = NULL;
@@ -441,17 +439,15 @@ sp_pass_decrypt_data(const char *infile, const char *outfile, const char *pass)
 
 	cipher = EVP_aes_256_cbc();
 
-	rbio = BIO_new_file(infile, "rb");
-	if (!rbio) {
-		log_error("Error opening input file %s\n", infile);
-		goto end;
+	rbio = BIO_new(BIO_s_file());
+	wbio = BIO_new(BIO_s_file());
+	if (!rbio || !wbio) {
+		log_error("Internal error\n");
+		return -1;
 	}
 
-	wbio = BIO_new_file(outfile, "wb");
-	if (!wbio) {
-		log_error("Error opening output file %s\n", outfile);
-		goto end;
-	}
+	BIO_set_fp(rbio, srcfp, BIO_NOCLOSE);
+	BIO_set_fp(wbio, dstfp, BIO_NOCLOSE);
 
 	if (BIO_read(rbio, mbuf, sizeof(mbuf)) != sizeof(mbuf) ||
 	    BIO_read(rbio, salt, sizeof(salt)) != sizeof(salt)) {
