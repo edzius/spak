@@ -1,24 +1,34 @@
 
-CFLAGS += -g -Os -Wall -pipe
-CFLAGS += -fPIC
-LDFLAGS = -lcrypto -lssl
+CFLAGS = -g -Os -Wall -pipe
+LDFLAGS =
+LDFLAGS_BIN =
+LDLIBS = -lc -lcrypto -lssl
+LDLIBS_BIN =
 
-OBJECTS = sexpak.o
-TARGET = libsexpak.so
+ifneq ($(CONFIG_SHARED_LIBRARY),)
+CFLAGS += -fPIC
+LDFLAGS_BIN += -Wl,-rpath . -L.
+LDLIBS_BIN += -lsexpak
+LIBNAME = libsexpak.so
+else
+BINDEPS = sexpak.o
+endif
+
+TARGETS = $(LIBNAME) sextest sip
 
 %.o: %.c
 	$(CC) -c $(CFLAGS) $< -o $@
 
-all: $(TARGET)
-
-$(TARGET): $(OBJECTS)
-	$(LD) $(LDFLAGS) -shared -o ${TARGET} $^ ${LDLIBS}
+all: $(TARGETS)
 
 clean:
-	rm -f *.o *.so
+	rm -f *.o $(TARGETS)
 
-sextest: sextest.c
-	$(CC) -L. -lsexpak -Wl,-rpath . sextest.c -o sextest
+libsexpak.so: sexpak.o
+	$(LD) $(LDFLAGS) -shared -o $@ $^ ${LDLIBS}
 
-sip: sip.c
-	$(CC) -L. -lsexpak -Wl,-rpath . sip.c -o sip
+sextest: $(BINDEPS) sextest.o
+	$(CC) $(LDFLAGS_BIN) $(LDFLAGS) -o $@ $^ ${LDLIBS} ${LDLIBS_BIN}
+
+sip: $(BINDEPS) sip.o
+	$(CC) $(LDFLAGS_BIN) $(LDFLAGS) -o $@ $^ ${LDLIBS} ${LDLIBS_BIN}
