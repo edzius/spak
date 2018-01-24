@@ -1,5 +1,6 @@
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <sys/types.h>
@@ -31,7 +32,7 @@ int fcopy(FILE *ifp, FILE *ofp)
 
 		nwrite = fwrite(buffer, 1, nread, ofp);
 		if (nread != nwrite) {
-			printf("Content copy error %u/%u\n", nread, nwrite);
+			printf("Content copy error %lu/%lu\n", nread, nwrite);
 			return -1;
 		}
 
@@ -153,7 +154,7 @@ int sp_parse(const char *srcfile, const char *dstfile)
 
 	flen = fread(&sph, 1, sizeof(sph), fp);
 	if (flen != sizeof(sph)) {
-		printf("Wrong file header size: %u\n", flen);
+		printf("Wrong file header size: %lu\n", flen);
 		return -1;
 	}
 
@@ -206,7 +207,7 @@ int sp_parse(const char *srcfile, const char *dstfile)
 int sp_encrypt(const char *srcfile, const char *dstfile)
 {
 	struct sex_opts so;
-	char plainbuf[2048/8];
+	unsigned char plainbuf[2048/8];
 	unsigned char cryptbuf[4096];
 	size_t plainlen, cryptlen;
 
@@ -231,7 +232,7 @@ int sp_encrypt(const char *srcfile, const char *dstfile)
 int sp_decrypt(const char *srcfile, const char *dstfile)
 {
 	struct sex_opts so;
-	char plainbuf[2048/8];
+	unsigned char plainbuf[2048/8];
 	unsigned char cryptbuf[4096];
 	size_t plainlen, cryptlen;
 
