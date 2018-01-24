@@ -3,3 +3,8 @@
 *.o
 *.crt
 *.key
+libspak.so
+spaktest
+sip
+sipenc
+sipdec
