@@ -5,27 +5,31 @@ The signed packaging library / utilities package based on OpenSSL.
 
 # Usage
 
+## Prepare
+
 Generate self signed key/certificate pair.
 ```
 openssl req -x509 -newkey rsa:4096 -keyout sign-sip.key -out sign-sip.crt -days 365 -nodes
 ```
 
-Note: default key names can be changed during build time passing CFLAGS
+## Build
 
-* CONFIG_SIP_SIGN_KEY -- private key file name
-* CONFIG_SIP_SIGN_KEY -- certificate file name
+Build time options:
 
-Build library/utility:
+* CONFIG_SPAK_KEY_FILE -- private key file name
+* CONFIG_SPAK_CRT_FILE -- certificate file name
+* CONFIG_SPAK_SHARED_LIB -- build shared libaray instead of static linkink
 
-Statically linked utility:
+Note: default key file names can be changed during build time passing CFLAGS
+
+Build shared library/utilities:
+
 ```
-make
+CONFIG_SPAK_SHARED_LIBRARY=1 make
+CONFIG_SPAK_KEY_FILE=sign-sip.key CONFIG_SPAK_CRT_FILE=sign-sip.crt make
 ```
 
-Shared library and utility:
-```
-CONFIG_SHARED_LIBRARY=1 make
-```
+## Run
 
 Run utility, you will need to provide mandatory input and output file arguments
 ```

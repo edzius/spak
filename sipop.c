@@ -12,16 +12,16 @@
 
 #include "spak.h"
 
-#ifndef CONFIG_SIP_SIGN_KEY
+#ifndef CONFIG_SPAK_KEY_FILE
 #define SIP_SIGN_KEY "sign-sip.key"
 #else
-#define SIP_SIGN_KEY CONFIG_SIP_SIGN_KEY
+#define SIP_SIGN_KEY CONFIG_SPAK_KEY_FILE
 #endif
 
-#ifndef CONFIG_SIP_SIGN_CRT
+#ifndef CONFIG_SPAK_CRT_FILE
 #define SIP_SIGN_CRT "sign-sip.crt"
 #else
-#define SIP_SIGN_CRT CONFIG_SIP_SIGN_CRT
+#define SIP_SIGN_CRT CONFIG_SPAK_CRT_FILE
 #endif
 
 static char sipack_magic[] = { 0x1B, 'S', 'P', '1' };
