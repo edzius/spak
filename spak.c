@@ -20,18 +20,20 @@ static EVP_PKEY *
 load_pvt_key(const char *file)
 {
 	EVP_PKEY *privkey;
-	FILE *fp;
+	BIO *keybio;
 
-	fp = fopen(file, "r");
-	if (!fp) {
-		log_info("Failed to open key file\n");
+	keybio = BIO_new(BIO_s_file());
+
+	if (!BIO_read_filename(keybio, file)) {
+		log_info("Failed to open key\n");
+		BIO_free(keybio);
 		return NULL;
 	}
 
-	if (!(privkey = PEM_read_PrivateKey(fp, NULL, NULL, NULL)))
+	if (!(privkey = PEM_read_bio_PrivateKey(keybio, NULL, NULL, NULL)))
 		log_info("Failed to read key\n");
 
-	fclose(fp);
+	BIO_free(keybio);
 
 	return privkey;
 }
@@ -39,18 +41,12 @@ load_pvt_key(const char *file)
 static EVP_PKEY *
 load_cert_key(const char *file)
 {
-	EVP_PKEY *pkey = NULL;
-	BIO *certbio = NULL;
-	X509 *cert = NULL;
+	EVP_PKEY *pkey;
+	BIO *certbio;
+	X509 *cert;
 
-	/* ---------------------------------------------------------- *
-	 * Create the Input/Output BIO's.                             *
-	 * ---------------------------------------------------------- */
 	certbio = BIO_new(BIO_s_file());
 
-	/* ---------------------------------------------------------- *
-	 * Load the certificate from file (PEM).                      *
-	 * ---------------------------------------------------------- */
 	if (!BIO_read_filename(certbio, file)) {
 		log_info("Failed to open cert\n");
 		BIO_free_all(certbio);
@@ -59,18 +55,15 @@ load_cert_key(const char *file)
 
 	if (!(cert = PEM_read_bio_X509(certbio, NULL, 0, NULL))) {
 		log_info("Failed to read cert\n");
-		BIO_free_all(certbio);
+		BIO_free(certbio);
 		return NULL;
 	}
 
-	/* ---------------------------------------------------------- *
-	 * Extract the certificate's public key data.                 *
-	 * ---------------------------------------------------------- */
 	if (!(pkey = X509_get_pubkey(cert)))
 		log_info("Failed to get public key from certificate\n");
 
 	X509_free(cert);
-	BIO_free_all(certbio);
+	BIO_free(certbio);
 
 	return pkey;
 }
