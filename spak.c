@@ -378,9 +378,6 @@ sp_pass_encrypt_data(FILE *srcfp, FILE *dstfp, const char *pass)
 		goto end;
 	}
 
-	/*
-	 * If -P option then don't bother writing
-	 */
 	if ((BIO_write(wbio, magic, sizeof(magic) - 1) != sizeof(magic) - 1 ||
 	     BIO_write(wbio, salt, sizeof(salt)) != sizeof(salt))) {
 		log_error("Error writing output file\n");
