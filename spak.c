@@ -9,6 +9,9 @@
 #include <openssl/rand.h>
 
 #include "spak.h"
+#ifdef CONFIG_SPAK_STATIC_CERT
+#include "spakcert.h"
+#endif
 
 #define log_info printf
 #define log_error printf
@@ -22,6 +25,7 @@ load_pvt_key(const char *file)
 	EVP_PKEY *privkey;
 	BIO *keybio;
 
+#ifndef CONFIG_SPAK_STATIC_CERT
 	keybio = BIO_new(BIO_s_file());
 
 	if (!BIO_read_filename(keybio, file)) {
@@ -29,6 +33,11 @@ load_pvt_key(const char *file)
 		BIO_free(keybio);
 		return NULL;
 	}
+#else
+	(void)file;
+
+	keybio = BIO_new_mem_buf(spak_key_data, -1);
+#endif
 
 	if (!(privkey = PEM_read_bio_PrivateKey(keybio, NULL, NULL, NULL)))
 		log_info("Failed to read key\n");
@@ -45,6 +54,7 @@ load_cert_key(const char *file)
 	BIO *certbio;
 	X509 *cert;
 
+#ifndef CONFIG_SPAK_STATIC_CERT
 	certbio = BIO_new(BIO_s_file());
 
 	if (!BIO_read_filename(certbio, file)) {
@@ -52,6 +62,11 @@ load_cert_key(const char *file)
 		BIO_free_all(certbio);
 		return NULL;
 	}
+#else
+	(void)file;
+
+	certbio = BIO_new_mem_buf(spak_crt_data, -1);
+#endif
 
 	if (!(cert = PEM_read_bio_X509(certbio, NULL, 0, NULL))) {
 		log_info("Failed to read cert\n");

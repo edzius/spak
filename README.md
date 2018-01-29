@@ -18,6 +18,7 @@ Build time options:
 
 * CONFIG_SPAK_KEY_FILE -- private key file name
 * CONFIG_SPAK_CRT_FILE -- certificate file name
+* CONFIG_SPAK_STATIC_CERT -- compile-in certs statically
 * CONFIG_SPAK_SHARED_LIB -- build shared libaray instead of static linkink
 
 Note: default key file names can be changed during build time passing CFLAGS
@@ -26,7 +27,7 @@ Build shared library/utilities:
 
 ```
 CONFIG_SPAK_SHARED_LIBRARY=1 make
-CONFIG_SPAK_KEY_FILE=sign-sip.key CONFIG_SPAK_CRT_FILE=sign-sip.crt make
+CONFIG_SPAK_STATIC_CERT=1 CONFIG_SPAK_KEY_FILE=sign-sip.key CONFIG_SPAK_CRT_FILE=sign-sip.crt make
 ```
 
 ## Run

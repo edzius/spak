@@ -4,6 +4,7 @@
 *.crt
 *.key
 libspak.so
+spakcert.h
 spaktest
 sip
 sipenc
