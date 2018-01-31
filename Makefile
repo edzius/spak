@@ -49,21 +49,7 @@ ifeq ($(CONFIG_SPAK_KEY_FILE)$(CONFIG_SPAK_CRT_FILE),)
 	$(error CONFIG_SPAK_KEY_FILE and CONFIG_SPAK_CRT_FILE are not set)
 endif
 	@echo [GEN] spakcert.h
-	@echo -e "// Autogenerate static key/crt data source." > $@
-	@echo -e "static char spak_key_data[] = " >> $@
-ifneq ($(CONFIG_SPAK_KEY_FILE),)
-	@sed 's/\(.*\)/"\1\\n"/g' $(CONFIG_SPAK_KEY_FILE) >> $@
-else
-	@echo -e "\"\"" >> $@
-endif
-	@echo -e ";\n" >> $@
-	@echo -e "static char spak_crt_data[] = " >> $@
-ifneq ($(CONFIG_SPAK_CRT_FILE),)
-	@sed 's/\(.*\)/"\1\\n"/g' $(CONFIG_SPAK_CRT_FILE) >> $@
-else
-	@echo -e "\"\"" >> $@
-endif
-	@echo -e ";\n" >> $@
+	sh ./certdata_format.sh -k "$(CONFIG_SPAK_KEY_FILE)" -c "$(CONFIG_SPAK_CRT_FILE)" $@
 endif
 
 libspak.so: spak.o
