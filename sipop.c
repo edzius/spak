@@ -9,6 +9,7 @@
 #include <getopt.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <arpa/inet.h>
 
 #include "spak.h"
 
@@ -65,7 +66,7 @@ sip_check(const char *srcfile)
 		return -1;
 	}
 
-	if (sph.keylen > 4096) {
+	if (ntohs(sph.keylen) > 4096) {
 		printf("Status: Fail\n");
 		return -1;
 	}
@@ -113,12 +114,12 @@ sip_encode(const char *srcfile, const char *dstfile, const char *mark)
 		return -1;
 	}
 
-	sph.size = srcinfo.st_size;
+	sph.size = htonl(srcinfo.st_size);
 	memcpy(sph.magic, sipack_magic, sizeof(sph.magic));
 	if (mark)
 		strncpy(sph.mark, mark, sizeof(sph.mark));
 
-	sph.keylen = cryptlen;
+	sph.keylen = htons(cryptlen);
 
 	ofp = fopen(dstfile, "w");
 	if (!ofp) {
@@ -153,6 +154,7 @@ sip_decode(const char *srcfile, const char *dstfile)
 	FILE *fp, *ofp;
 	unsigned char cryptbuf[4096];
 	char passbuf[2048/8];
+	size_t cryptlen;
 	size_t passlen;
 	int ret;
 
@@ -179,20 +181,22 @@ sip_decode(const char *srcfile, const char *dstfile)
 		return -1;
 	}
 
-	if (sph.keylen > 4096) {
+	cryptlen = ntohs(sph.keylen);
+
+	if (cryptlen > 4096) {
 		printf("Invalid file size\n");
 		return -1;
 	}
 
-	flen = fread(cryptbuf, 1, sph.keylen, fp);
-	if (flen != sph.keylen) {
+	flen = fread(cryptbuf, 1, cryptlen, fp);
+	if (flen != cryptlen) {
 		printf("Invalid key size\n");
 		return -1;
 	}
 
 	strcpy(so.s_cert_file, SIP_SIGN_CRT);
 
-	passlen = sp_key_decrypt_data(cryptbuf, sph.keylen, (unsigned char *)passbuf, &so);
+	passlen = sp_key_decrypt_data(cryptbuf, cryptlen, (unsigned char *)passbuf, &so);
 	if (passlen <= 0) {
 		printf("Failed to decrypt data\n");
 		return -1;
@@ -204,7 +208,7 @@ sip_decode(const char *srcfile, const char *dstfile)
 		return -1;
 	}
 
-	fseek(fp, sizeof(sph) + sph.keylen, SEEK_SET);
+	fseek(fp, sizeof(sph) + cryptlen, SEEK_SET);
 
 	ret = sp_pass_decrypt_data(fp, ofp, passbuf);
 
