@@ -254,6 +254,68 @@ int sp_decrypt(const char *srcfile, const char *dstfile)
 	return 0;
 }
 
+int sp_lock(const char *srcfile, const char *dstfile, const char *pass)
+{
+	FILE *ifp, *ofp;
+	int ret;
+
+	if (!pass || !strlen(pass)) {
+		printf("Invalid pass length\n");
+		return -1;
+	}
+
+	ifp = fopen(srcfile, "r");
+	if (!ifp) {
+		printf("Can't open file for reading: %s\n", srcfile);
+		return -1;
+	}
+
+	ofp = fopen(dstfile, "w");
+	if (!ofp) {
+		printf("Can't open file for writing: %s\n", dstfile);
+		fclose(ifp);
+		return -1;
+	}
+
+	ret = sp_pass_encrypt_data(ifp, ofp, pass);
+
+	fclose(ifp);
+	fclose(ofp);
+
+	return ret;
+}
+
+int sp_unlock(const char *srcfile, const char *dstfile, const char *pass)
+{
+	FILE *ifp, *ofp;
+	int ret;
+
+	if (!pass || !strlen(pass)) {
+		printf("Invalid pass length\n");
+		return -1;
+	}
+
+	ifp = fopen(srcfile, "r");
+	if (!ifp) {
+		printf("Can't open file for reading: %s\n", srcfile);
+		return -1;
+	}
+
+	ofp = fopen(dstfile, "w");
+	if (!ofp) {
+		printf("Can't open file for writing: %s\n", dstfile);
+		fclose(ifp);
+		return -1;
+	}
+
+	ret = sp_pass_decrypt_data(ifp, ofp, pass);
+
+	fclose(ifp);
+	fclose(ofp);
+
+	return ret;
+}
+
 int main(int argc, char *argv[])
 {
 	int ret;
@@ -290,6 +352,28 @@ int main(int argc, char *argv[])
 		return ret;
 	} else if (!strcmp(argv[1], "d")) {
 		ret = sp_decrypt(argv[2], argv[3]);
+		if (ret)
+			printf("FAIL\n");
+
+		return ret;
+	} else if (!strcmp(argv[1], "l")) {
+		if (argc < 5) {
+			printf("Missing lock aruments\n");
+			return -1;
+		}
+
+		ret = sp_lock(argv[3], argv[4], argv[2]);
+		if (ret)
+			printf("FAIL\n");
+
+		return ret;
+	} else if (!strcmp(argv[1], "u")) {
+		if (argc < 5) {
+			printf("Missing unlock aruments\n");
+			return -1;
+		}
+
+		ret = sp_unlock(argv[3], argv[4], argv[2]);
 		if (ret)
 			printf("FAIL\n");
 
