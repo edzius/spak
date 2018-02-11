@@ -40,9 +40,14 @@ int
 sip_check(const char *srcfile)
 {
 	struct sipack_header sph;
+	struct spak_opts so;
 	struct stat srcinfo;
 	FILE *fp;
 	size_t flen;
+	unsigned char cryptbuf[4096];
+	char passbuf[2048/8];
+	size_t cryptlen;
+	size_t passlen;
 
 	OpenSSL_add_all_algorithms();
 
@@ -69,7 +74,23 @@ sip_check(const char *srcfile)
 		return -1;
 	}
 
-	if (ntohs(sph.keylen) > 4096) {
+	cryptlen = ntohs(sph.keylen);
+
+	if (cryptlen > 4096) {
+		printf("Status: Fail\n");
+		return -1;
+	}
+
+	flen = fread(cryptbuf, 1, cryptlen, fp);
+	if (flen != cryptlen) {
+		printf("Status: Fail\n");
+		return -1;
+	}
+
+	strcpy(so.s_cert_file, SIP_SIGN_CRT);
+
+	passlen = sp_key_decrypt_data(cryptbuf, cryptlen, (unsigned char *)passbuf, &so);
+	if (passlen <= 0) {
 		printf("Status: Fail\n");
 		return -1;
 	}
