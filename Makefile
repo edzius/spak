@@ -2,8 +2,8 @@
 qstrip=$(strip $(subst ",,$(1)))
 #"))
 
-CFLAGS = -g -Os -Wall -pipe
-LDFLAGS =
+CFLAGS = -g -Os -Wall -pipe $(EXT_CFLAGS)
+LDFLAGS = $(EXT_LDFLAGS)
 LDFLAGS_BIN =
 LDLIBS = -lc -lcrypto -lssl
 LDLIBS_BIN =
