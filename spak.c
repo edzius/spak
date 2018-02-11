@@ -246,8 +246,6 @@ sp_sign_file(FILE *srcfp, char *outbuf, size_t *outlen, struct spak_opts *opts)
 	BIO *in = NULL;
 	BIO *out = NULL;
 
-	OpenSSL_add_all_algorithms();
-
 	in = BIO_new(BIO_s_file());
 	out = BIO_new(BIO_s_mem());
 	if (!in || !out)
@@ -274,8 +272,6 @@ sp_verfiy_file(FILE *srcfp, char *signbuf, size_t signlen, struct spak_opts *opt
 	BIO *in = NULL;
 	BIO *sig = NULL;
 
-	OpenSSL_add_all_algorithms();
-
 	in = BIO_new(BIO_s_file());
 	sig = BIO_new_mem_buf(signbuf, signlen);
 	if (!in || !sig)
@@ -297,8 +293,6 @@ sp_key_encrypt_data(unsigned char *srcbuf, size_t srclen, unsigned char *dstbuf,
 	int retlen;
 	EVP_PKEY *pkey;
 	RSA *rsa;
-
-	OpenSSL_add_all_algorithms();
 
 	pkey = load_pvt_key(opts->s_key_file);
 	if (!pkey) {
@@ -323,8 +317,6 @@ sp_key_decrypt_data(unsigned char *srcbuf, size_t srclen, unsigned char *dstbuf,
 	int retlen;
 	EVP_PKEY *pkey;
 	RSA *rsa;
-
-	OpenSSL_add_all_algorithms();
 
 	pkey = load_cert_key(opts->s_cert_file);
 	if (!pkey) {

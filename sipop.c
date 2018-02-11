@@ -10,6 +10,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <arpa/inet.h>
+#include <openssl/evp.h>
 
 #include "spak.h"
 
@@ -42,6 +43,8 @@ sip_check(const char *srcfile)
 	struct stat srcinfo;
 	FILE *fp;
 	size_t flen;
+
+	OpenSSL_add_all_algorithms();
 
 	if (stat(srcfile, &srcinfo)) {
 		printf("Status: Fail\n");
@@ -87,6 +90,8 @@ sip_encode(const char *srcfile, const char *dstfile, const char *mark)
 	unsigned char cryptbuf[4096];
 	size_t cryptlen;
 	int ret;
+
+	OpenSSL_add_all_algorithms();
 
 	if (stat(srcfile, &srcinfo)) {
 		printf("No such file: %s\n", srcfile);
@@ -157,6 +162,8 @@ sip_decode(const char *srcfile, const char *dstfile)
 	size_t cryptlen;
 	size_t passlen;
 	int ret;
+
+	OpenSSL_add_all_algorithms();
 
 	if (access(srcfile, F_OK)) {
 		printf("No such file: %s\n", srcfile);
