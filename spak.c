@@ -37,6 +37,7 @@ load_pvt_key(const char *file)
 	(void)file;
 
 	keybio = BIO_new_mem_buf(spak_key_data, -1);
+	BIO_set_close(keybio, BIO_NOCLOSE);
 #endif
 
 	if (!(privkey = PEM_read_bio_PrivateKey(keybio, NULL, NULL, NULL)))
@@ -66,6 +67,7 @@ load_cert_key(const char *file)
 	(void)file;
 
 	certbio = BIO_new_mem_buf(spak_crt_data, -1);
+	BIO_set_close(certbio, BIO_NOCLOSE);
 #endif
 
 	if (!(cert = PEM_read_bio_X509(certbio, NULL, 0, NULL))) {

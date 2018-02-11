@@ -93,7 +93,7 @@ sip_encode(const char *srcfile, const char *dstfile, const char *mark)
 		return -1;
 	}
 
-	fp = fopen(srcfile, "r");
+	fp = fopen(srcfile, "rb");
 	if (!fp) {
 		printf("Can't open file for reading: %s\n", srcfile);
 		return -1;
@@ -121,7 +121,7 @@ sip_encode(const char *srcfile, const char *dstfile, const char *mark)
 
 	sph.keylen = htons(cryptlen);
 
-	ofp = fopen(dstfile, "w");
+	ofp = fopen(dstfile, "wb");
 	if (!ofp) {
 		printf("Can't open file for writing: %s\n", dstfile);
 		fclose(fp);
@@ -137,7 +137,7 @@ sip_encode(const char *srcfile, const char *dstfile, const char *mark)
 	fclose(ofp);
 	fclose(fp);
 
-	if (ret < 0) {
+	if (ret) {
 		unlink(dstfile);
 		return -1;
 	}
@@ -163,7 +163,7 @@ sip_decode(const char *srcfile, const char *dstfile)
 		return -1;
 	}
 
-	fp = fopen(srcfile, "r");
+	fp = fopen(srcfile, "rb");
 	if (!fp) {
 		printf("Can't open file for reading: %s\n", srcfile);
 		return -1;
@@ -202,7 +202,7 @@ sip_decode(const char *srcfile, const char *dstfile)
 		return -1;
 	}
 
-	ofp = fopen(dstfile, "w");
+	ofp = fopen(dstfile, "wb");
 	if (!ofp) {
 		printf("Can't open file for writing: %s\n", dstfile);
 		return -1;
@@ -215,7 +215,7 @@ sip_decode(const char *srcfile, const char *dstfile)
 	fclose(ofp);
 	fclose(fp);
 
-	if (ret < 0) {
+	if (ret) {
 		unlink(dstfile);
 		return -1;
 	}
